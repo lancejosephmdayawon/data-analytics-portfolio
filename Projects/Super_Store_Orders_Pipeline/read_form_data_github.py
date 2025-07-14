@@ -16,9 +16,9 @@ from oauth2client.service_account import ServiceAccountCredentials
 from gspread.exceptions import WorksheetNotFound
 import json
 import os
-from decimal import Decimal, ROUND_HALF_UP  # ← for true decimal types
+from decimal import Decimal, ROUND_HALF_UP
 
-# Format float display to 2 decimal places in pandas repr only
+# Format float display to 2 decimal places (for visual purposes only)
 pd.options.display.float_format = "{:,.2f}".format
 
 # Google Sheets API Authentication
@@ -27,7 +27,7 @@ scope = [
     "https://www.googleapis.com/auth/drive"
 ]
 
-# Load credentials from environment
+# Load credentials from environment variable
 try:
     json_creds = os.environ["GOOGLE_SHEETS_JSON"]
     creds_dict = json.loads(json_creds)
@@ -44,10 +44,10 @@ df = pd.DataFrame(data)
 
 # Rename and clean columns
 df.columns = ["time_stamp", "customer_name", "product", "quantity", "region"]
-df["time_stamp"]   = pd.to_datetime(df["time_stamp"], errors="coerce")
-df["order_date"]   = df["time_stamp"].dt.date.astype(str)
-df["order_time"]   = df["time_stamp"].dt.time.astype(str)
-df["quantity"]     = pd.to_numeric(df["quantity"], errors="coerce").fillna(0).astype(int)
+df["time_stamp"] = pd.to_datetime(df["time_stamp"], errors="coerce")
+df["order_date"] = df["time_stamp"].dt.date.astype(str)
+df["order_time"] = df["time_stamp"].dt.time.astype(str)
+df["quantity"] = pd.to_numeric(df["quantity"], errors="coerce").fillna(0).astype(int)
 df["customer_name"] = df["customer_name"].astype(str).str.strip()
 
 # Compound name keywords (surname or middle name)
@@ -116,16 +116,21 @@ except WorksheetNotFound:
 
 product_data = product_sheet.get_all_records()
 product_df = pd.DataFrame(product_data)
-product_df["product_name"]   = product_df["product_name"].astype(str).str.strip().str.title()
-product_df["cost"]           = product_df["cost"].replace(r'[$,]', '', regex=True).astype(float).round(2)
-product_df["selling_price"]  = product_df["selling_price"].replace(r'[$,]', '', regex=True).astype(float).round(2)
+product_df["product_name"] = product_df["product_name"].astype(str).str.strip().str.title()
+product_df["cost"] = product_df["cost"].replace(r'[$,]', '', regex=True).astype(float).round(2)
+product_df["selling_price"] = product_df["selling_price"].replace(r'[$,]', '', regex=True).astype(float).round(2)
 
 # Merge Order Data with Product Info
 df = df.merge(product_df, how="left", left_on="product", right_on="product_name")
 
-df["total_cost"]  = (df["cost"] * df["quantity"]).round(2)
-df["total_sales"] = (df["selling_price"] * df["quantity"]).round(2)
-df["profit"]      = (df["total_sales"] - df["total_cost"]).round(2)
+# Decimal conversion function
+def to_decimal(x):
+    return Decimal(str(x)).quantize(Decimal("0.00"), rounding=ROUND_HALF_UP)
+
+# Calculate totals and profit using Decimal
+df["total_cost"] = (df["cost"] * df["quantity"]).apply(to_decimal)
+df["total_sales"] = (df["selling_price"] * df["quantity"]).apply(to_decimal)
+df["profit"] = (df["total_sales"] - df["total_cost"]).apply(to_decimal)
 
 # Final Column Order
 df = df[[ 
@@ -135,18 +140,19 @@ df = df[[
     "cost", "selling_price", "total_cost", "total_sales", "profit"
 ]]
 
-# Ensure numeric columns stay numeric
+# Ensure quantity stays int
 df["quantity"] = df["quantity"].fillna(0).astype(int)
 
-# Convert monetary columns to Decimal(2 places)
-def to_decimal(x):
-    return Decimal(str(x)).quantize(Decimal("0.00"), rounding=ROUND_HALF_UP)
-
+# Convert monetary columns to Decimal
 currency_cols = ["cost", "selling_price", "total_cost", "total_sales", "profit"]
 for col in currency_cols:
-    df[col] = df[col].fillna(0.0).astype(float).round(2).apply(to_decimal)
+    df[col] = df[col].apply(to_decimal)
 
-# Export to Google Sheets
+# Export to Google Sheets (convert Decimal to float for JSON)
+export_df = df.copy()
+for col in currency_cols:
+    export_df[col] = export_df[col].apply(float)
+
 output_sheet_name = "Cleaned_Data"
 workbook = client.open("Superstore Orders")
 
@@ -157,6 +163,6 @@ except WorksheetNotFound:
     output_sheet = workbook.add_worksheet(title=output_sheet_name, rows=1000, cols=20)
 
 output_sheet.clear()
-output_sheet.update([df.columns.values.tolist()] + df.values.tolist())
+output_sheet.update([export_df.columns.values.tolist()] + export_df.values.tolist())
 
 print(f"\n✅ Data successfully written to '{output_sheet_name}' worksheet in 'Superstore Orders'.")
