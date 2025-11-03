@@ -8,16 +8,11 @@ This GitHub portfolio showcases the projects and learning journey I’ve complet
 ---
 
 Certificates
-- 🔗 See full certificate list: [Wix Portfolio – Certificates]([https://yourportfolio.com/certificates](https://lancejosephmanalan.wixsite.com/myportfolio/certificates))
-
----
-
-📄 Resume
-📎 [Download My Resume (PDF)](TO FOLLOW)
+- 🔗 See full certificate list: [Wix Portfolio – Certificates]([https://yourportfolio.com/certificates](https://lancejosephdayawon.wixsite.com/myportfolio/certificates))
 
 ---
 
 📬 Contact
 - 📧 Email: lancejosephmanalangdayawonwork@gmail.com  
 - 🔗 [LinkedIn](https://www.linkedin.com/in/lance-joseph-dayawon-933a93357/) 
-- 🌐 [Portfolio Website](https://lancejosephmanalan.wixsite.com/myportfolio)
+- 🌐 [Portfolio Website](https://lancejosephdayawon.wixsite.com/myportfolio)
