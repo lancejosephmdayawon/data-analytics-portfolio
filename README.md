@@ -8,7 +8,7 @@ This GitHub portfolio showcases the projects and learning journey I’ve complet
 ---
 
 Certificates
-- 🔗 See full certificate list: [Wix Portfolio – Certificates]([https://yourportfolio.com/certificates](https://lancejosephdayawon.wixsite.com/myportfolio/certificates))
+- 🔗 See full certificate list: [Wix Portfolio – Certificates]([https://yourportfolio.com/certificates](https://lancejosephdayawon.wixsite.com/data-analytics/certificates))
 
 ---
 
